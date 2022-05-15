@@ -17,7 +17,7 @@ from sklearn.model_selection import GroupKFold
 audio_dataset_path = 'UrbanSound8K/audio/'
 metadata = pd.read_csv('UrbanSound8K/metadata/UrbanSound8K.csv')
 
-#Feature Extraction Function
+#Audio Feature Extraction Function
 def features_extractor(file):
     audio, sample_rate = librosa.load(file_name, res_type='kaiser_fast')
     mfccs_features = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=40)
@@ -35,7 +35,7 @@ for index_num, row in tqdm(metadata.iterrows()):
     extracted_features.append([data, final_class_labels, final_class_folds])
 
 #Make the Dataframe
-extracted_features_df = pd.DataFrame(extracted_features,columns=['feature','class', 'fold'])
+extracted_features_df = pd.DataFrame(extracted_features, columns=['feature', 'class', 'fold'])
 extracted_features_df.head()
 
 X = np.array(extracted_features_df['feature'].tolist())
@@ -47,8 +47,8 @@ y = to_categorical(labelencoder.fit_transform(y))
 
 num_labels = y.shape[1]
 
-# Model
-model=Sequential()
+#Model
+model = Sequential()
 ###first layer
 model.add(Dense(100,input_shape=(40,)))
 model.add(Activation('relu'))
@@ -61,7 +61,6 @@ model.add(Dropout(0.5))
 model.add(Dense(100))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
-
 ###final layer
 model.add(Dense(num_labels))
 model.add(Activation('softmax'))
@@ -70,8 +69,8 @@ model.summary()
 
 model.compile(loss='categorical_crossentropy',metrics=['accuracy'],optimizer='adam')
 
-num_epochs = 500 #100 originally
-num_batch_size = 256 #32 originally
+num_epochs = 500
+num_batch_size = 256
 
 checkpointer = ModelCheckpoint(filepath='saved_models/audio_classification.hdf5', verbose=1, save_best_only=True)
 
@@ -93,7 +92,7 @@ for train_index, test_index in group_kfold.split(X, y, folds):
 
     model.fit(X_train, y_train, batch_size=num_batch_size, epochs=num_epochs, validation_data=(X_test, y_test), callbacks=[checkpointer], verbose=1)
 
-    test_accuracy = model.evaluate(X_test,y_test,verbose=0)
+    test_accuracy = model.evaluate(X_test, y_test, verbose=0)
     print(test_accuracy[1])
     accuracies.append(test_accuracy[1])
 
@@ -104,7 +103,7 @@ for train_index, test_index in group_kfold.split(X, y, folds):
         high_y_train = y_train
         high_y_test = y_test
 
-#Fitting of the Most Accurate Combination
+#Fitting of the Most Accurate Combination or Train/Test Data
 model.fit(high_X_train, high_y_train, batch_size=num_batch_size, epochs=num_epochs, validation_data=(high_X_test, high_y_test), callbacks=[checkpointer], verbose=1)
 
 
